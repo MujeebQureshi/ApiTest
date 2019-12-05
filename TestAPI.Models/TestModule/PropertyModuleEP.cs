@@ -545,10 +545,11 @@ namespace TestAPI.Models
                     test.TryGetValue("email", out email);
                     string _email = email.ToString();
                     */
-                                                                                  
-                                
+
+                    test.Add("DateQueried", DateTime.Now.ToString("yyyy-MM-dd"));            
 
                     var query = db.Query("contactus").Insert(test);
+
 
                    // SqlKata.SqlResult compiledQuery = compiler.Compile(query);
 
@@ -571,6 +572,85 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
+        public static object GetContactUs(RequestModel request)
+        {
+           // var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            
+
+            // Setup the connection and compiler
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+
+
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+            try
+            {
+                // You can register the QueryFactory in the IoC container
+                var response = db.Query("ContactUs").Get();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
+                bool hasData = (response != null) ? true : false;
+                successResponseModel = new SuccessResponse(response, hasData);
+            }
+            catch (Exception ex)
+            {
+                //Logger.WriteErrorLog(ex);
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+        }
+        public static object PublishProperty(RequestModel request)
+        {
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+            db.Connection.Open();
+            using (var scope = db.Connection.BeginTransaction())
+            {
+                try
+                {
+                    var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+                    object _DisplayProperty;
+                    test.TryGetValue("DisplayProperty", out _DisplayProperty);
+                    object _propretyID;
+                    test.TryGetValue("PropertyID", out _propretyID);
+                    
+                    string publish = _DisplayProperty.ToString();
+                    test.Remove("DisplayProperty");
+                    
+                    var displayquery = db.Query("PropertyDetail").Where("PropertyID", _propretyID).Update(new {DisplayProperty = publish});
+
+                   // var query = db.Query("contactus").Insert(test);
+
+
+
+
+                    // SqlKata.SqlResult compiledQuery = compiler.Compile(query);
+
+                    //Inject the Identity in the Compiled Query SQL object
+
+
+
+
+                    bool hasData = true;//(response != null) ? true : false;
+                    scope.Commit();
+                    successResponseModel = new SuccessResponse("", hasData, "Record Saved");
+                }
+                catch (Exception ex)
+                {
+                    //Logger.WriteErrorLog(ex);
+                    scope.Rollback();
+                    return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+                }
+            }
+            return successResponseModel;
+
+        }
+
 
     }
 }

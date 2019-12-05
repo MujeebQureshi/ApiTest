@@ -219,3 +219,5 @@ alter table RegisteredUser modify NICno  varchar(20) not null;
 alter table RegisteredUser modify NTN_No  varchar(20) not null;
 alter table RegisteredUser modify Contact_No  varchar(20) not null;
 alter table RegisteredUser modify Phone_No  varchar(20) not null;
+alter table contactus add isRead varchar(1) not null;
+alter table contactus modify isRead varchar(1) default "N" not null;

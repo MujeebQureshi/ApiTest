@@ -516,7 +516,7 @@ namespace TestAPI.Models
         }
         public static object ContactUs(RequestModel request)
         {
-            // Setup the connection and compiler
+            
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
@@ -528,23 +528,7 @@ namespace TestAPI.Models
                 try
                 {
                     var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
-                    /*
-                    object FullName;
-                    test.TryGetValue("FullName", out FullName);
-                    string _FullName = FullName.ToString();
-                    object Phone;
-                    test.TryGetValue("Phone", out Phone);
-                    //string _Phone = Phone.ToString();
-                    object MessageSubject;
-                    test.TryGetValue("MessageSubject", out MessageSubject);
-                    string _MessageSubject = MessageSubject.ToString();
-                    object MessageText;
-                    test.TryGetValue("MessageText", out MessageText);
-                    string _MessageText = MessageText.ToString();
-                    object email;
-                    test.TryGetValue("email", out email);
-                    string _email = email.ToString();
-                    */
+                  
 
                     test.Add("DateQueried", DateTime.Now.ToString("yyyy-MM-dd"));            
 
@@ -574,10 +558,7 @@ namespace TestAPI.Models
         }
         public static object GetContactUs(RequestModel request)
         {
-           // var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
-            
-
-            // Setup the connection and compiler
+           
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
 
 
@@ -587,8 +568,7 @@ namespace TestAPI.Models
             SuccessResponse successResponseModel = new SuccessResponse();
             try
             {
-                // You can register the QueryFactory in the IoC container
-                var response = db.Query("ContactUs").Get();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
+                var response = db.Query("ContactUs").Get();  
                 bool hasData = (response != null) ? true : false;
                 successResponseModel = new SuccessResponse(response, hasData);
             }
@@ -624,19 +604,11 @@ namespace TestAPI.Models
                     
                     var displayquery = db.Query("PropertyDetail").Where("PropertyID", _propretyID).Update(new {DisplayProperty = publish});
 
-                   // var query = db.Query("contactus").Insert(test);
+                 
 
 
 
-
-                    // SqlKata.SqlResult compiledQuery = compiler.Compile(query);
-
-                    //Inject the Identity in the Compiled Query SQL object
-
-
-
-
-                    bool hasData = true;//(response != null) ? true : false;
+                    bool hasData = true;
                     scope.Commit();
                     successResponseModel = new SuccessResponse("", hasData, "Record Saved");
                 }
@@ -650,6 +622,128 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
+        public static object HottestSelling(RequestModel request)
+        {
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+            db.Connection.Open();
+            using (var scope = db.Connection.BeginTransaction())
+            {
+                try
+                {
+                    
+                     string proprank = @" (SELECT  sum(a.ShareQty) as sumShareQty, 
+		                                    a.PropertyID, 
+                                            (sum(a.ShareQty)/b.TotalShareQuantity) as proprank,
+                                            c.propertytype,c.PropertyName,c.Address,c.City,c.Country,c.PropertyType,
+                                            c.Size,c.sizeUnit,
+                                            c.CommercialResidential,c.Lattitude,c.Longitude,c.PropertyPics,
+                                            c.PropertyVideos,c.PropertyPrice,
+                                            c.Currency,c.PStatus,c.DisplayProperty,c.Documents,c.MinimumInvestmentAmount,
+                                            c.CurrencyMIA,
+                                            c.MinimumInvestPeriod,c.UnitMIP,
+                                            b.TotalShareQuantity from usershare a, propertyshare b, propertydetail c
+                                            where a.PropertyID = b.PropertyID
+                                            and b.PropertyID = c.PropertyID
+                                            and c.propertytype = 'D'
+        
+                                            group by propertyid
+                                            order by proprank
+                                            limit 4)
+                                           union all
+                                          (SELECT  sum(a.ShareQty) as sumShareQty, 
+		                                    a.PropertyID, 
+                                            (sum(a.ShareQty)/b.TotalShareQuantity) as proprank,
+                                            c.propertytype,c.PropertyName,c.Address,c.City,c.Country,c.PropertyType,
+                                            c.Size,c.sizeUnit,
+                                            c.CommercialResidential,c.Lattitude,c.Longitude,c.PropertyPics,
+                                            c.PropertyVideos,c.PropertyPrice,
+                                            c.Currency,c.PStatus,c.DisplayProperty,c.Documents,c.MinimumInvestmentAmount,
+                                            c.CurrencyMIA,
+                                            c.MinimumInvestPeriod,c.UnitMIP,
+                                            b.TotalShareQuantity from usershare a, propertyshare b, propertydetail c
+                                            where a.PropertyID = b.PropertyID
+                                            and b.PropertyID = c.PropertyID
+                                            and c.propertytype = 'L'
+        
+                                            group by propertyid
+                                            order by proprank
+                                            limit 4)
+                                           union all
+                                          (SELECT  sum(a.ShareQty) as sumShareQty, 
+		                                    a.PropertyID, 
+                                            (sum(a.ShareQty)/b.TotalShareQuantity) as proprank,
+                                            c.propertytype,c.PropertyName,c.Address,c.City,c.Country,c.PropertyType,
+                                            c.Size,c.sizeUnit,
+                                            c.CommercialResidential,c.Lattitude,c.Longitude,c.PropertyPics,
+                                            c.PropertyVideos,c.PropertyPrice,
+                                            c.Currency,c.PStatus,c.DisplayProperty,c.Documents,c.MinimumInvestmentAmount,
+                                            c.CurrencyMIA,
+                                            c.MinimumInvestPeriod,c.UnitMIP,
+                                            b.TotalShareQuantity from usershare a, propertyshare b, propertydetail c
+                                            where a.PropertyID = b.PropertyID
+                                            and b.PropertyID = c.PropertyID
+                                            and c.propertytype = 'R'
+        
+                                            group by propertyid
+                                            order by proprank
+                                            limit 4)";
+                    var hotestsell = db.Select(proprank);
+
+                    bool hasData = (hotestsell != null) ? true : false;
+                    successResponseModel = new SuccessResponse(hotestsell, hasData);
+                }
+                catch (Exception ex)
+                {
+                    //Logger.WriteErrorLog(ex);
+                    scope.Rollback();
+                    return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+                }
+            }
+            return successResponseModel;
+
+        }
+        public static object IsRead(RequestModel request)
+        {
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+            db.Connection.Open();
+            using (var scope = db.Connection.BeginTransaction())
+            {
+                try
+                {
+                    var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+                    object FID;
+                    test.TryGetValue("FormID", out FID);
+                    int _FormID = Convert.ToInt32(FID);
+                    test.Add("isRead", "Y");
+                    test.Remove("FormID");
+                    var query = db.Query("contactus").Where("FormID",_FormID).Update(test);
+
+
+                    
+
+                    bool hasData = true;
+                    scope.Commit();
+                    successResponseModel = new SuccessResponse("", hasData, "Record Saved");
+                }
+                catch (Exception ex)
+                {
+                    //Logger.WriteErrorLog(ex);
+                    scope.Rollback();
+                    return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+                }
+            }
+            return successResponseModel;
+
+        }
+
 
 
     }

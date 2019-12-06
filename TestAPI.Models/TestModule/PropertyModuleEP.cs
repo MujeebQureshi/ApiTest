@@ -24,13 +24,13 @@ namespace TestAPI.Models
             var connection = new MySqlConnection(conn);
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
-             
+
             SuccessResponse successResponseModel = new SuccessResponse();
 
             try
             {
                 // You can register the QueryFactory in the IoC container
-                
+
                 string strRawQuery = @"
                     (select * from propertydetail where propertytype = 1 limit 4)
                     union all
@@ -40,7 +40,7 @@ namespace TestAPI.Models
                 ";
 
                 var response = db.Select(strRawQuery);
-                
+
                 bool hasData = (response != null) ? true : false;
                 successResponseModel = new SuccessResponse(response, hasData);
             }
@@ -197,7 +197,7 @@ namespace TestAPI.Models
                 }
             }
             return successResponseModel;
-            
+
         }
         public static object GetPropertyByID(RequestModel request)
         {
@@ -242,14 +242,14 @@ namespace TestAPI.Models
                         {
                             object response_rent = db.Query("rentalproperty").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
                             row.Add("rental", response_rent);
-                            
+
 
                         }
-                       
-                            object response_pred = db.Query("propertyprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
-                            row.Add("propertyprediction", response_pred);
 
-                        
+                        object response_pred = db.Query("propertyprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                        row.Add("propertyprediction", response_pred);
+
+
 
                     }
 
@@ -272,10 +272,10 @@ namespace TestAPI.Models
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
             object _PropertyID;
             test.TryGetValue("PropertyID", out _PropertyID);
-            
+
             // Setup the connection and compiler
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
-          
+
 
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
@@ -287,44 +287,44 @@ namespace TestAPI.Models
                 // You can register the QueryFactory in the IoC container
                 IEnumerable<IDictionary<string, object>> response;
                 response = db.Query("propertydetail")
-                    .Select("PropertyID","PropertyPics","PropertyVideos", "PStatus" , "DisplayProperty", "Documents", 
+                    .Select("PropertyID", "PropertyPics", "PropertyVideos", "PStatus", "DisplayProperty", "Documents",
                     "MinimumInvestmentAmount", "PropertyType")
-                    .Where("PropertyID",_PropertyID )
+                    .Where("PropertyID", _PropertyID)
                     .Get()
                     .Cast<IDictionary<string, object>>();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
 
-               bool hasData = (response != null) ? true : false;
-                 if (hasData)
-                 {
+                bool hasData = (response != null) ? true : false;
+                if (hasData)
+                {
 
                     foreach (var row in response)
                     {
-                        var _PropertyType = row["PropertyType"]; 
-                        if ((_PropertyType.ToString() == "D") )
-                          {
-                              object response_dev = db.Query("developmental").Where("PropertyID",_PropertyID).Get().Cast<IDictionary<string, object>>();
-                              row.Add("developmental", response_dev);
-                              object response_dev_pred = db.Query("developmentalprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
-                              row.Add("developmentalprediction", response_dev_pred);
+                        var _PropertyType = row["PropertyType"];
+                        if ((_PropertyType.ToString() == "D"))
+                        {
+                            object response_dev = db.Query("developmental").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                            row.Add("developmental", response_dev);
+                            object response_dev_pred = db.Query("developmentalprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                            row.Add("developmentalprediction", response_dev_pred);
 
                         }
-                        else if ((_PropertyType.ToString() == "R") )
+                        else if ((_PropertyType.ToString() == "R"))
                         {
                             object response_rent = db.Query("rentalproperty").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
                             row.Add("RentalProperty", response_rent);
-                          
+
 
                         }
-                       
-                         object response_pred = db.Query("propertyprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
-                         row.Add("propertyprediction", response_pred);
 
-                        
-                       
+                        object response_pred = db.Query("propertyprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                        row.Add("propertyprediction", response_pred);
+
+
+
                     }
 
-                 }
-                 
+                }
+
                 successResponseModel = new SuccessResponse(response, hasData);
             }
             catch (Exception ex)
@@ -385,7 +385,7 @@ namespace TestAPI.Models
                     {
                         //convert and add key    
                     }
-                    if (_PropertyType== "D")
+                    if (_PropertyType == "D")
                     {
                         object _Developmental;
                         test.TryGetValue("Developmental", out _Developmental);
@@ -393,7 +393,7 @@ namespace TestAPI.Models
                         Dictionary<string, object> DevelopmentalProperty = JsonConvert
                                            .DeserializeObject<Dictionary
                                            <string, object>>(_Developmental.ToString());
-                       
+
 
                         if (DevelopmentalProperty != null)
                         {
@@ -401,9 +401,9 @@ namespace TestAPI.Models
                             //foreach (var dev in DevelopmentalProperty)
                             //{
                             DevelopmentalProperty.Add("PropertyID", _PropertyID);
-                                  
+
                             var resdevprop = db.Query("developmental").Where("PropertyID", _PropertyID).Update(DevelopmentalProperty);
-                           // }
+                            // }
 
 
                         }
@@ -432,7 +432,7 @@ namespace TestAPI.Models
 
 
                     }
-                    else if (_PropertyType== "R")
+                    else if (_PropertyType == "R")
                     {
                         object RentalProperty;
                         test.TryGetValue("RentalProperty", out RentalProperty);
@@ -441,13 +441,13 @@ namespace TestAPI.Models
                                             .DeserializeObject<List<Dictionary
                                             <string, object>>>(RentalProperty.ToString());
                         if (_RentalProperty != null)
-                        {   
+                        {
 
                             foreach (var ren in _RentalProperty)
                             {
                                 object _RentalPropertyid;
                                 ren.TryGetValue("RentalPropertyID", out _RentalPropertyid);
-                                if(_RentalPropertyid==null)
+                                if (_RentalPropertyid == null)
                                 {
                                     object RentalContract;
                                     ren.TryGetValue("RentalContract", out RentalContract);
@@ -463,10 +463,10 @@ namespace TestAPI.Models
 
 
                             }
-                            
-                            
+
+
                         }
-                        
+
 
 
                     }
@@ -597,5 +597,143 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
+        public static object ContactUs(RequestModel request)
+        {
+            // Setup the connection and compiler
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+            db.Connection.Open();
+            using (var scope = db.Connection.BeginTransaction())
+            {
+                try
+                {
+                    var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+                    /*
+                    object FullName;
+                    test.TryGetValue("FullName", out FullName);
+                    string _FullName = FullName.ToString();
+                    object Phone;
+                    test.TryGetValue("Phone", out Phone);
+                    //string _Phone = Phone.ToString();
+                    object MessageSubject;
+                    test.TryGetValue("MessageSubject", out MessageSubject);
+                    string _MessageSubject = MessageSubject.ToString();
+                    object MessageText;
+                    test.TryGetValue("MessageText", out MessageText);
+                    string _MessageText = MessageText.ToString();
+                    object email;
+                    test.TryGetValue("email", out email);
+                    string _email = email.ToString();
+                    */
+
+                    test.Add("DateQueried", DateTime.Now.ToString("yyyy-MM-dd"));            
+
+                    var query = db.Query("contactus").Insert(test);
+
+
+                   // SqlKata.SqlResult compiledQuery = compiler.Compile(query);
+
+                    //Inject the Identity in the Compiled Query SQL object
+                  
+                    
+
+
+                    bool hasData = true;//(response != null) ? true : false;
+                    scope.Commit();
+                    successResponseModel = new SuccessResponse("", hasData, "Record Saved");
+                }
+                catch (Exception ex)
+                {
+                    //Logger.WriteErrorLog(ex);
+                    scope.Rollback();
+                    return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+                }
+            }
+            return successResponseModel;
+
+        }
+        public static object GetContactUs(RequestModel request)
+        {
+           // var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            
+
+            // Setup the connection and compiler
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+
+
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+            try
+            {
+                // You can register the QueryFactory in the IoC container
+                var response = db.Query("ContactUs").Get();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
+                bool hasData = (response != null) ? true : false;
+                successResponseModel = new SuccessResponse(response, hasData);
+            }
+            catch (Exception ex)
+            {
+                //Logger.WriteErrorLog(ex);
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+        }
+        public static object PublishProperty(RequestModel request)
+        {
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+            db.Connection.Open();
+            using (var scope = db.Connection.BeginTransaction())
+            {
+                try
+                {
+                    var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+                    object _DisplayProperty;
+                    test.TryGetValue("DisplayProperty", out _DisplayProperty);
+                    object _propretyID;
+                    test.TryGetValue("PropertyID", out _propretyID);
+                    
+                    string publish = _DisplayProperty.ToString();
+                    test.Remove("DisplayProperty");
+                    
+                    var displayquery = db.Query("PropertyDetail").Where("PropertyID", _propretyID).Update(new {DisplayProperty = publish});
+
+                   // var query = db.Query("contactus").Insert(test);
+
+
+
+
+                    // SqlKata.SqlResult compiledQuery = compiler.Compile(query);
+
+                    //Inject the Identity in the Compiled Query SQL object
+
+
+
+
+                    bool hasData = true;//(response != null) ? true : false;
+                    scope.Commit();
+                    successResponseModel = new SuccessResponse("", hasData, "Record Saved");
+                }
+                catch (Exception ex)
+                {
+                    //Logger.WriteErrorLog(ex);
+                    scope.Rollback();
+                    return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+                }
+            }
+            return successResponseModel;
+
+        }
+
+
     }
 }

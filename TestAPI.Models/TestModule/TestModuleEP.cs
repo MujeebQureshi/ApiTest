@@ -97,8 +97,8 @@ namespace TestAPI.Models
 
             try
             {
-                // You can register the QueryFactory in the IoC container
-                var response = db.Query("propertydetail").Insert(test);
+              //  You can register the QueryFactory in the IoC container
+               var response = db.Query("propertydetail").Insert(test);
                 bool hasData = true;//(response != null) ? true : false;
                 successResponseModel = new SuccessResponse(response, hasData);
             }

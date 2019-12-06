@@ -67,6 +67,16 @@ namespace TestAPI.Models
                 { new DDList("Residential", "R") }
             };
         }
+        internal static object getShareStatus()
+        {
+            return new List<DDList>()
+            { { new DDList("--Select an option--", "") },
+                { new DDList("Approved", "A") },
+                { new DDList("OnHold", "H") }, 
+                { new DDList("Cancel", "C") },
+                 { new DDList("Sold", "S") }
+            };
+        }
 
         internal static object getPropertyStatus()
         {

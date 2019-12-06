@@ -23,7 +23,7 @@ namespace TestAPI.Models
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
-            
+
             try
             {
                 password = DBManagerUtility._encodeJWT(new Dictionary<string, string>() { { "Password", password } }, AppConstants.AppSecretKeyPassword);
@@ -31,12 +31,12 @@ namespace TestAPI.Models
                 // You can register the QueryFactory in the IoC container
                 if (type == "USER")
                 {
-                    object response = db.Query("User").Where(q=> q.Where("Email", username).OrWhere("Username", username) )
+                    object response = db.Query("User").Where(q => q.Where("Email", username).OrWhere("Username", username))
                         .Where("Password", password)
                         .Where("RegistrationConfirmation", "Y").First();
 
                     var strResponse = response.ToString().Replace("DapperRow,", "").Replace("=", ":");
-                    Dictionary<string,string> temp =  JsonConvert.DeserializeObject< Dictionary < string,string>>(strResponse);
+                    Dictionary<string, string> temp = JsonConvert.DeserializeObject<Dictionary<string, string>>(strResponse);
                     return temp;
                 }
                 else if (type == "ADMIN")
@@ -91,10 +91,10 @@ namespace TestAPI.Models
 
                     if (User != null)
                     {
-                        
-                        
+
+
                         Dictionary<string, object> _User = JsonConvert.DeserializeObject<Dictionary<string, object>>(User.ToString());
-                        
+
                         //check if email exists
                         object Email;
                         _User.TryGetValue("Email", out Email);
@@ -104,7 +104,7 @@ namespace TestAPI.Models
                         if (response != null && response.Count() > 0)
                         {
                             //return error
-                            return new SuccessResponse(null,HttpStatusCode.Conflict,"Email already exists");
+                            return new SuccessResponse(null, HttpStatusCode.Conflict, "Email already exists");
                         }
 
                         object Password;
@@ -116,7 +116,7 @@ namespace TestAPI.Models
                         if (!string.IsNullOrEmpty(_Password))
                         {
                             //convert and add key    
-                            _Password = DBManagerUtility._encodeJWT(new Dictionary<string, string>() { { "Password",_Password } }, AppConstants.AppSecretKeyPassword);
+                            _Password = DBManagerUtility._encodeJWT(new Dictionary<string, string>() { { "Password", _Password } }, AppConstants.AppSecretKeyPassword);
                             _User.Add("Password", _Password);
                         }
 
@@ -140,21 +140,22 @@ namespace TestAPI.Models
 
                         //testing
                         Dictionary<string, string> responseData = new Dictionary<string, string>();
-                        
+
                         #region issue AuthToken 
                         var pairs = new List<KeyValuePair<string, string>>
                         {
-                            new KeyValuePair<string, string>( "grant_type", "password" ), 
-                            new KeyValuePair<string, string>( "username", _Email ), 
+                            new KeyValuePair<string, string>( "grant_type", "password" ),
+                            new KeyValuePair<string, string>( "username", _Email ),
                             new KeyValuePair<string, string> ( "Password", _PasswordUnhashed ),
                             new KeyValuePair<string, string> ( "scope", "USER" )
                         };
 
                         var content = new FormUrlEncodedContent(pairs);
-                        
+
                         ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
-                        using (var client = new HttpClient()) {
-                            
+                        using (var client = new HttpClient())
+                        {
+
                             var responseToken = client.PostAsync(Constants.BaseUrl + "token", content).Result;
                             var responseContent = responseToken.Content.ReadAsStringAsync().Result;
                             responseData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent);
@@ -215,13 +216,13 @@ namespace TestAPI.Models
                         _Password = DBManagerUtility._encodeJWT(new Dictionary<string, string>() { { "Password", _Password } }, AppConstants.AppSecretKeyPassword);
                         test.Add("Password", _Password);
                     }
-                    
+
                     var resRegUser = db.Query("Admin").Insert(test);
 
                     scope.Commit();
                     bool hasData = true;//(response != null) ? true : false;
                     successResponseModel = new SuccessResponse("", hasData);
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -251,7 +252,7 @@ namespace TestAPI.Models
                     object User;
                     test.TryGetValue("User", out User);
                     test.Remove("User");
-                    
+
                     if (User != null)
                     {
 
@@ -359,7 +360,8 @@ namespace TestAPI.Models
             {
                 try
                 {
-                    if (claim != null && !string.IsNullOrEmpty(claim.Value)) {
+                    if (claim != null && !string.IsNullOrEmpty(claim.Value))
+                    {
                         var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
 
                         test.Add("UserId", claim);
@@ -373,7 +375,7 @@ namespace TestAPI.Models
                         scope.Commit();
                         bool hasData = true;//(response != null) ? true : false;
                         successResponseModel = new SuccessResponse("", hasData);
-                        
+
                     }
                     else
                     {
@@ -393,7 +395,7 @@ namespace TestAPI.Models
         public static object SendVerificationEmail(RequestModel request)
         {
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
-            
+
             SuccessResponse successResponseModel = new SuccessResponse();
 
             try
@@ -403,7 +405,7 @@ namespace TestAPI.Models
                     object Url;
                     test.TryGetValue("Url", out Url);
                     string _Url = Url.ToString();
-                    
+
                     object Email;
                     test.TryGetValue("Email", out Email);
                     string _Email = Email.ToString();
@@ -416,9 +418,9 @@ namespace TestAPI.Models
                 }
                 else
                 {
-                    successResponseModel = new SuccessResponse(null,HttpStatusCode.BadRequest,"Object is null");
+                    successResponseModel = new SuccessResponse(null, HttpStatusCode.BadRequest, "Object is null");
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -431,7 +433,7 @@ namespace TestAPI.Models
 
         public static object Verify(RequestModel request)
         {
-            var test = JsonConvert.DeserializeObject<Dictionary<string,object>>(Convert.ToString(request.RequestData));
+            var test = JsonConvert.DeserializeObject<Dictionary<string, object>>(Convert.ToString(request.RequestData));
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
@@ -444,7 +446,7 @@ namespace TestAPI.Models
                     object Token;
                     test.TryGetValue("Token", out Token);
                     string _Token = Token.ToString();
-                    var obj = JsonConvert.DeserializeObject<Dictionary<string,object>>(DBManagerUtility._decodeJWT(_Token, AppConstants.AppSecretLinkObject) as string);
+                    var obj = JsonConvert.DeserializeObject<Dictionary<string, object>>(DBManagerUtility._decodeJWT(_Token, AppConstants.AppSecretLinkObject) as string);
 
                     object Type;
                     test.TryGetValue("Type", out Type);
@@ -455,7 +457,8 @@ namespace TestAPI.Models
                     string _Email = Email.ToString();
 
                     var response = db.Query("User").Where("Email", _Email).First();
-                    if (response != null) {
+                    if (response != null)
+                    {
                         if (_Type == "FPASS")
                         {
                             object newPassword;
@@ -507,6 +510,167 @@ namespace TestAPI.Models
         //forgot password
         //change password
 
+        public static object BuyShare(RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            object _PropertyID;
+            test.TryGetValue("PropertyID", out _PropertyID);
+            object TotalShareQuantity;
+            test.TryGetValue("TotalShareQuantity",out TotalShareQuantity);
+            int _totalShareQuantity = Convert.ToInt32(TotalShareQuantity);
+            object ShareQty;
+            test.TryGetValue("ShareQty", out ShareQty);
+            int _ShareQty = Convert.ToInt32(ShareQty);
+            object ShareMarketValue;
+            test.TryGetValue("ShareBuyingValue", out ShareMarketValue);
+            object TotalAmount;
+            test.TryGetValue("ShareAmount", out TotalAmount);
+            object RegUserID;
+            test.TryGetValue("RegUserID", out RegUserID);
 
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+            SuccessResponse successResponseModel = new SuccessResponse();
+            try
+            {
+                //object response;
+                var response = db.Query("UserShare")
+                           .SelectRaw("SUM(`ShareQty`) as SumShares")
+                           .Where("PropertyID", _PropertyID)
+                           .Get()
+                           .Cast<IDictionary<string, object>>();
+                //total share -usershare-sharehold
+                int sumShare = 0;
+                if (response != null)
+                    sumShare = response.ElementAt(0)["SumShares"] == null ? 0 : Convert.ToInt32(response.ElementAt(0)["SumShares"]);
+                response = db.Query("PropertyShareHold")
+                           .Select("PropertyID", "ShareQty")
+                           .SelectRaw("MAX(`URN`) as MaxURN")
+                           .Where("PropertyID", _PropertyID)
+                           .Get()
+                           .Cast<IDictionary<string, object>>();
+                int holdShare = 0;
+                if (response != null)
+                {
+                    holdShare = response.ElementAt(0)["ShareQty"] == null ? 0 : Convert.ToInt32(response.ElementAt(0)["ShareQty"]);
+                    
+                }
+                int remainingShares = _totalShareQuantity - holdShare - sumShare;
+                if (remainingShares > _ShareQty)
+                {
+                    Dictionary<string, object> UserShareRecord = new Dictionary<string, object>() { { "PropertyID", _PropertyID },
+                                                                                                    {"RegUserID", RegUserID},
+                                                                                                    {"DateofInvestment", DateTime.Now.Date },
+                                                                                                    {"ShareMarketValue",ShareMarketValue},
+                                                                                                    {"ShareStatus","H" },
+                                                                                                    {"TotalAmount",TotalAmount},
+                                                                                                    {"ShareQty",ShareQty}
+                                                                                                 }; 
+                   var res = db.Query("UserShare").Insert(UserShareRecord);
+                   bool hasData = true ;
+                   successResponseModel = new SuccessResponse(response, hasData);
+                   
+                }
+                else
+                {
+                    //handle when remaining share is less
+
+                }
+               
+              
+            }
+            catch (Exception ex)
+            {
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+            return successResponseModel;
+        }
+        
+        public static object GetUserShares (RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            object RegUserID;
+            test.TryGetValue("RegUserID", out RegUserID);
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+            SuccessResponse successResponseModel = new SuccessResponse();
+            try
+            {
+                var response = db.Query("UserShare as U")
+                    .Select("PropertyDetail.PropertyName as PropertyName", "PropertyDetail.PropertyType as PropertyType","U.ShareQty as ShareQty",
+                    "U.DateofInvestment as DateofInvestment", "U.ShareMarketValue as ShareMarketValue", "U.TotalAmount as TotalAmount"  )
+                    .Join("PropertyDetail", "PropertyDetail.PropertyID", "U.PropertyID")
+                    .Get();
+
+                bool hasData = (response != null) ? true : false;
+                successResponseModel = new SuccessResponse(response, hasData);
+            }
+            catch (Exception ex)
+            {
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+        }
+        public static object GetUserSharesOnHold(RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            object RegUserID;
+            test.TryGetValue("RegUserID", out RegUserID);
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+            SuccessResponse successResponseModel = new SuccessResponse();
+            try
+            {
+                var response = db.Query("UserShare as S")
+                    .Select("U.FirstName as FirstName","U.LastName as LastName","PropertyDetail.PropertyName as PropertyName", "PropertyDetail.PropertyType as PropertyType",
+                    "S.UserShareID as UserShareID", "S.ShareQty as ShareQty",
+                    "S.DateofInvestment as DateofInvestment", "S.ShareMarketValue as ShareMarketValue", "S.TotalAmount as TotalAmount")
+                    .Join("PropertyDetail", "PropertyDetail.PropertyID", "S.PropertyID")
+                    .Join("RegisteredUser as R", "R.RegUserID", "S.RegUserID")
+                    .Join("User as U" ,"R.UserID","U.UserID")
+                    .Where("S.ShareStatus","H")
+                    .Get();
+
+                bool hasData = (response != null) ? true : false;
+                successResponseModel = new SuccessResponse(response, hasData);
+            }
+            catch (Exception ex)
+            {
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+        }
+        public static object EditShareStatus(RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            object _UserShareID;
+            test.TryGetValue("UserShareID", out _UserShareID);
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+            SuccessResponse successResponseModel = new SuccessResponse();
+            try
+            {
+                var response = db.Query("UserShare").Where("UserShareID", _UserShareID).Update(test);
+                    
+                bool hasData =  true;
+                successResponseModel = new SuccessResponse(response, hasData);
+            }
+            catch (Exception ex)
+            {
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+        }
     }
 }

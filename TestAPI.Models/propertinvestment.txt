@@ -225,3 +225,5 @@ alter table contactus modify isRead varchar(1) default "N" not null;
 //ahmed
 alter table user_interested modify UserInterestedID int(7) zerofill not null auto_increment ; 
 
+alter table contactus modify isRead varchar(1) default "N" not null;
+alter table propertyinvestment.propertydetail add PropertyDetailDescription blob ;

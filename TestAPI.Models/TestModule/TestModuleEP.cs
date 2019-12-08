@@ -19,9 +19,7 @@ namespace TestAPI.Models
             //var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
 
             // Setup the connection and compiler
-            var conn = "Database =PropertyInvestment; Data Source = localhost; User Id = root; Password = gsmgms12";
-            // var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
-            var connection = new MySqlConnection(conn);
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler(); 
             var db = new QueryFactory(connection, compiler);
 
@@ -30,7 +28,8 @@ namespace TestAPI.Models
             try
             {
                 // You can register the QueryFactory in the IoC container
-                var response = db.Query("User").Get();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
+                var response = db.Query("User").Get();
+                //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
                 bool hasData = (response != null) ? true : false;
                 successResponseModel = new SuccessResponse(response, hasData);
             }
@@ -47,7 +46,6 @@ namespace TestAPI.Models
         public static object GetCustomList(RequestModel request)
         {
             //var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
-
             // Setup the connection and compiler
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
@@ -58,8 +56,6 @@ namespace TestAPI.Models
             try
             {
                 // You can register the QueryFactory in the IoC container
-                //var response = db.Query("jpadmin").Get();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
-                //var response = db.Select("select * from jpadmin");
                 string strRawQuery = @"
                     (select * from jpopening where Department = 'Human Resource' limit 1)
                     union all
@@ -79,7 +75,6 @@ namespace TestAPI.Models
             }
 
             return successResponseModel;
-
         }
         
         public static object SaveDemoRecord(RequestModel request)
@@ -87,9 +82,7 @@ namespace TestAPI.Models
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
 
             // Setup the connection and compiler
-            // var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
-            
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
 
@@ -97,9 +90,9 @@ namespace TestAPI.Models
 
             try
             {
-              //  You can register the QueryFactory in the IoC container
-               var response = db.Query("propertydetail").Insert(test);
-                bool hasData = true;//(response != null) ? true : false;
+                //You can register the QueryFactory in the IoC container
+                var response = db.Query("propertydetail").Insert(test);
+                bool hasData = true;
                 successResponseModel = new SuccessResponse(response, hasData);
             }
             catch (Exception ex)

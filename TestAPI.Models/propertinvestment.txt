@@ -201,7 +201,8 @@ create table  User_interested (
     ValueOnCurrentDate float(10) not null,
     primary key(UserInterestedID)
     
-) ;
+);
+
 alter table User change Passwrd  Password varchar(200);
 alter table User modify RegistrationConfirmation  varchar(1);
 create table Admin (
@@ -209,7 +210,6 @@ create table Admin (
     AdmUserId varchar(25) not null, 
     Password varchar(200) not null, 
     AdmRole varchar(10) not null,
-    
     primary key ( AdminID) 
 
 );
@@ -221,3 +221,7 @@ alter table RegisteredUser modify Contact_No  varchar(20) not null;
 alter table RegisteredUser modify Phone_No  varchar(20) not null;
 alter table contactus add isRead varchar(1) not null;
 alter table contactus modify isRead varchar(1) default "N" not null;
+
+//ahmed
+alter table user_interested modify UserInterestedID int(7) zerofill not null auto_increment ; 
+

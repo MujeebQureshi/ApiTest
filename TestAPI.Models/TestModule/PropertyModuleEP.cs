@@ -19,9 +19,8 @@ namespace TestAPI.Models
         public static object GetTop4(RequestModel request)
         {
             // Setup the connection and compiler
-            var conn = "Database =PropertyInvestment; Data Source = localhost; User Id = root; Password = gsmgms12";
-            // var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
-            var connection = new MySqlConnection(conn);
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+           // var connection = new MySqlConnection(conn);
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
 
@@ -267,6 +266,76 @@ namespace TestAPI.Models
 
 
         }
+        public static object GetAllPropertyByPropertyStatus(RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            object _PropertyType;
+            test.TryGetValue("PropertyType", out _PropertyType);
+
+            // Setup the connection and compiler
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+
+
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+
+            try
+            {
+                // You can register the QueryFactory in the IoC container
+                IEnumerable<IDictionary<string, object>> response;
+                response = db.Query("propertydetail")
+                    .Where("PropertyType", _PropertyType)
+                    .Get()
+                    .Cast<IDictionary<string, object>>();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
+
+                bool hasData = (response != null) ? true : false;
+                if (hasData)
+                {
+
+                    foreach (var row in response)
+                    {
+                        //var _PropertyType = row["PropertyType"];
+                        var PropertyID = row["PropertyID"];
+                        int _PropertyID = Convert.ToInt32(PropertyID);
+                        if ((_PropertyType.ToString() == "D"))
+                        {
+                            object response_dev = db.Query("developmental").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                            row.Add("developmental", response_dev);
+                            object response_dev_pred = db.Query("developmentalprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                            row.Add("developmentalprediction", response_dev_pred);
+
+                        }
+                        else if ((_PropertyType.ToString() == "R"))
+                        {
+                            object response_rent = db.Query("rentalproperty").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                            row.Add("rental", response_rent);
+
+
+                        }
+
+                        object response_pred = db.Query("propertyprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                        row.Add("propertyprediction", response_pred);
+
+
+
+                    }
+
+                }
+
+                successResponseModel = new SuccessResponse(response, hasData);
+            }
+            catch (Exception ex)
+            {
+                //Logger.WriteErrorLog(ex);
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+
+        }
         public static object GetPropertyEditableByID(RequestModel request)
         {
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
@@ -337,6 +406,7 @@ namespace TestAPI.Models
 
 
         }
+
 
         public static object EditProperty(RequestModel request)
         {
@@ -535,9 +605,7 @@ namespace TestAPI.Models
 
             try
             {
-                // You can register the QueryFactory in the IoC container
-                //var response = db.Query("jpadmin").Get();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
-                //var response = db.Select("select * from jpadmin");
+               
                 IDictionary<string, object> response = db.Query("PropertyShare")
                                                           .Where("PropertyID", _PropertyID)
                                                           .Get()
@@ -611,36 +679,10 @@ namespace TestAPI.Models
                 try
                 {
                     var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
-                    /*
-                    object FullName;
-                    test.TryGetValue("FullName", out FullName);
-                    string _FullName = FullName.ToString();
-                    object Phone;
-                    test.TryGetValue("Phone", out Phone);
-                    //string _Phone = Phone.ToString();
-                    object MessageSubject;
-                    test.TryGetValue("MessageSubject", out MessageSubject);
-                    string _MessageSubject = MessageSubject.ToString();
-                    object MessageText;
-                    test.TryGetValue("MessageText", out MessageText);
-                    string _MessageText = MessageText.ToString();
-                    object email;
-                    test.TryGetValue("email", out email);
-                    string _email = email.ToString();
-                    */
+                   
 
                     test.Add("DateQueried", DateTime.Now.ToString("yyyy-MM-dd"));            
-
                     var query = db.Query("contactus").Insert(test);
-
-
-                   // SqlKata.SqlResult compiledQuery = compiler.Compile(query);
-
-                    //Inject the Identity in the Compiled Query SQL object
-                  
-                    
-
-
                     bool hasData = true;//(response != null) ? true : false;
                     scope.Commit();
                     successResponseModel = new SuccessResponse("", hasData, "Record Saved");

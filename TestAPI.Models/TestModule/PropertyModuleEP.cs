@@ -18,10 +18,7 @@ namespace TestAPI.Models
     {
         public static object GetTop4(RequestModel request)
         {
-            // Setup the connection and compiler
-            var conn = "Database =PropertyInvestment; Data Source = localhost; User Id = root; Password = gsmgms12";
-            // var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
-            var connection = new MySqlConnection(conn);
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
 
@@ -29,8 +26,6 @@ namespace TestAPI.Models
 
             try
             {
-                // You can register the QueryFactory in the IoC container
-
                 string strRawQuery = @"
                     (select * from propertydetail where propertytype = 1 limit 4)
                     union all
@@ -51,12 +46,10 @@ namespace TestAPI.Models
             }
 
             return successResponseModel;
-
         }
 
         public static object SaveAddNewProperty(RequestModel request)
         {
-            // Setup the connection and compiler
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
@@ -185,7 +178,7 @@ namespace TestAPI.Models
                             var resRentalProperty = db.Query("RentalProperty").Insert(_RentalProperty);
                         }
                     }
-                    bool hasData = true;//(response != null) ? true : false;
+                    bool hasData = true;
                     scope.Commit();
                     successResponseModel = new SuccessResponse("", hasData, "Record Saved");
                 }
@@ -199,16 +192,14 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
+
         public static object GetPropertyByID(RequestModel request)
         {
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
             object _PropertyID;
             test.TryGetValue("PropertyID", out _PropertyID);
 
-            // Setup the connection and compiler
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
-
-
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
 
@@ -216,17 +207,15 @@ namespace TestAPI.Models
 
             try
             {
-                // You can register the QueryFactory in the IoC container
                 IEnumerable<IDictionary<string, object>> response;
                 response = db.Query("propertydetail")
                     .Where("PropertyID", _PropertyID)
                     .Get()
-                    .Cast<IDictionary<string, object>>();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
+                    .Cast<IDictionary<string, object>>();
 
                 bool hasData = (response != null) ? true : false;
                 if (hasData)
                 {
-
                     foreach (var row in response)
                     {
                         var _PropertyType = row["PropertyType"];
@@ -236,21 +225,15 @@ namespace TestAPI.Models
                             row.Add("developmental", response_dev);
                             object response_dev_pred = db.Query("developmentalprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
                             row.Add("developmentalprediction", response_dev_pred);
-
                         }
                         else if ((_PropertyType.ToString() == "R"))
                         {
                             object response_rent = db.Query("rentalproperty").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
                             row.Add("rental", response_rent);
-
-
                         }
 
                         object response_pred = db.Query("propertyprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
                         row.Add("propertyprediction", response_pred);
-
-
-
                     }
 
                 }
@@ -267,16 +250,14 @@ namespace TestAPI.Models
 
 
         }
+
         public static object GetPropertyEditableByID(RequestModel request)
         {
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
             object _PropertyID;
             test.TryGetValue("PropertyID", out _PropertyID);
 
-            // Setup the connection and compiler
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
-
-
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
 
@@ -284,19 +265,17 @@ namespace TestAPI.Models
 
             try
             {
-                // You can register the QueryFactory in the IoC container
                 IEnumerable<IDictionary<string, object>> response;
                 response = db.Query("propertydetail")
                     .Select("PropertyID", "PropertyPics", "PropertyVideos", "PStatus", "DisplayProperty", "Documents",
                     "MinimumInvestmentAmount", "PropertyType")
                     .Where("PropertyID", _PropertyID)
                     .Get()
-                    .Cast<IDictionary<string, object>>();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
+                    .Cast<IDictionary<string, object>>();
 
                 bool hasData = (response != null) ? true : false;
                 if (hasData)
                 {
-
                     foreach (var row in response)
                     {
                         var _PropertyType = row["PropertyType"];
@@ -306,23 +285,16 @@ namespace TestAPI.Models
                             row.Add("developmental", response_dev);
                             object response_dev_pred = db.Query("developmentalprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
                             row.Add("developmentalprediction", response_dev_pred);
-
                         }
                         else if ((_PropertyType.ToString() == "R"))
                         {
                             object response_rent = db.Query("rentalproperty").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
                             row.Add("RentalProperty", response_rent);
-
-
                         }
 
                         object response_pred = db.Query("propertyprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
                         row.Add("propertyprediction", response_pred);
-
-
-
                     }
-
                 }
 
                 successResponseModel = new SuccessResponse(response, hasData);
@@ -397,16 +369,10 @@ namespace TestAPI.Models
 
                         if (DevelopmentalProperty != null)
                         {
-
-                            //foreach (var dev in DevelopmentalProperty)
-                            //{
                             DevelopmentalProperty.Add("PropertyID", _PropertyID);
-
                             var resdevprop = db.Query("developmental").Where("PropertyID", _PropertyID).Update(DevelopmentalProperty);
-                            // }
-
-
                         }
+
                         object DevelopmentalPrediction;
                         test.TryGetValue("DevelopmentalPrediction", out DevelopmentalPrediction);
                         test.Remove("DevelopmentalPrediction");
@@ -425,12 +391,8 @@ namespace TestAPI.Models
                                     pd.Add("PropertyID", _PropertyID);
                                     var resPdRN = db.Query("developmentalprediction").Insert(pd);
                                 }
-
                             }
-
                         }
-
-
                     }
                     else if (_PropertyType == "R")
                     {
@@ -442,7 +404,6 @@ namespace TestAPI.Models
                                             <string, object>>>(RentalProperty.ToString());
                         if (_RentalProperty != null)
                         {
-
                             foreach (var ren in _RentalProperty)
                             {
                                 object _RentalPropertyid;
@@ -460,15 +421,8 @@ namespace TestAPI.Models
                                     ren.Add("PropertyID", _PropertyID);
                                     var resRental = db.Query("RentalProperty").Insert(ren);
                                 }
-
-
                             }
-
-
                         }
-
-
-
                     }
                     object PropertyPrediction;
                     test.TryGetValue("PropertyPrediction", out PropertyPrediction);
@@ -487,18 +441,12 @@ namespace TestAPI.Models
                                 pd.Add("PropertyID", _PropertyID);
                                 var resPdRN = db.Query("propertyprediction").Insert(pd);
                             }
-
                         }
-
                     }
-
-
-
-
+                    
                     var query = db.Query("propertydetail").Where("PropertyID", _PropertyID).Update(test);
-
-
-                    bool hasData = true;//(response != null) ? true : false;
+                    
+                    bool hasData = true;
                     scope.Commit();
                     successResponseModel = new SuccessResponse("", hasData, "Record Edited");
 
@@ -510,11 +458,7 @@ namespace TestAPI.Models
                 }
 
                 return successResponseModel;
-
-
             }
-
-           
         }
 
         public static object GetSharePercentage(RequestModel request)
@@ -525,19 +469,17 @@ namespace TestAPI.Models
             object Amount;
             test.TryGetValue("Amount", out Amount);
             int _Amount = Convert.ToInt32(Amount);
-            // Setup the connection and compiler
+
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
             int _totalShareQuantity = 0;
             int _CurrentValue = 0;
+
             SuccessResponse successResponseModel = new SuccessResponse();
 
             try
             {
-                // You can register the QueryFactory in the IoC container
-                //var response = db.Query("jpadmin").Get();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
-                //var response = db.Select("select * from jpadmin");
                 IDictionary<string, object> response = db.Query("PropertyShare")
                                                           .Where("PropertyID", _PropertyID)
                                                           .Get()
@@ -555,11 +497,6 @@ namespace TestAPI.Models
                 IDictionary<string, object> predresponse = db.Select(sql).Cast<IDictionary<string, object>>().First();
 
 
-                /*("PropertyPrediction")
-                .Where("PropertyID", _PropertyID).Where()
-                .Get()
-                .Cast<IDictionary<string, object>>().First();*/
-
                 hasData = (response != null) ? true : false;
                 if (hasData)
                 {
@@ -576,7 +513,6 @@ namespace TestAPI.Models
                 percentvalue = Math.Round(percentvalue, 2);
 
                 double shareAmount = rnd_user_shares * PerShareValue;
-                // float percentvalue = (_Amount / (_CurrentValue / float(_totalShareQuantity)))/float(_totalShareQuantity) *100;
                 Dictionary<string, object> res = new Dictionary<string, object>() { { "Percentage", percentvalue },
                                                                                     { "ShareAmount",shareAmount } ,
                                                                                     { "SharesQuantity",rnd_user_shares },
@@ -590,13 +526,13 @@ namespace TestAPI.Models
             }
             catch (Exception ex)
             {
-                //Logger.WriteErrorLog(ex);
                 return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
             }
 
             return successResponseModel;
 
         }
+
         public static object ContactUs(RequestModel request)
         {
             
@@ -616,22 +552,13 @@ namespace TestAPI.Models
                     test.Add("DateQueried", DateTime.Now.ToString("yyyy-MM-dd"));            
 
                     var query = db.Query("contactus").Insert(test);
-
-
-                   // SqlKata.SqlResult compiledQuery = compiler.Compile(query);
-
-                    //Inject the Identity in the Compiled Query SQL object
-                  
                     
-
-
-                    bool hasData = true;//(response != null) ? true : false;
+                    bool hasData = true;
                     scope.Commit();
                     successResponseModel = new SuccessResponse("", hasData, "Record Saved");
                 }
                 catch (Exception ex)
                 {
-                    //Logger.WriteErrorLog(ex);
                     scope.Rollback();
                     return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
                 }
@@ -639,6 +566,7 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
+
         public static object GetContactUs(RequestModel request)
         {
            
@@ -657,13 +585,13 @@ namespace TestAPI.Models
             }
             catch (Exception ex)
             {
-                //Logger.WriteErrorLog(ex);
                 return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
             }
 
             return successResponseModel;
 
         }
+
         public static object PublishProperty(RequestModel request)
         {
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
@@ -686,18 +614,12 @@ namespace TestAPI.Models
                     test.Remove("DisplayProperty");
                     
                     var displayquery = db.Query("PropertyDetail").Where("PropertyID", _propretyID).Update(new {DisplayProperty = publish});
-
-                 
-
-
-
                     bool hasData = true;
                     scope.Commit();
                     successResponseModel = new SuccessResponse("", hasData, "Record Saved");
                 }
                 catch (Exception ex)
                 {
-                    //Logger.WriteErrorLog(ex);
                     scope.Rollback();
                     return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
                 }
@@ -705,6 +627,7 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
+
         public static object HottestSelling(RequestModel request)
         {
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
@@ -717,8 +640,7 @@ namespace TestAPI.Models
             {
                 try
                 {
-                    
-                     string proprank = @" (SELECT  sum(a.ShareQty) as sumShareQty, 
+                    string proprank = @" (SELECT  sum(a.ShareQty) as sumShareQty, 
 		                                    a.PropertyID, 
                                             (sum(a.ShareQty)/b.TotalShareQuantity) as proprank,
                                             c.propertytype,c.PropertyName,c.Address,c.City,c.Country,c.PropertyType,
@@ -774,14 +696,13 @@ namespace TestAPI.Models
                                             group by propertyid
                                             order by proprank
                                             limit 4)";
-                    var hotestsell = db.Select(proprank);
 
+                    var hotestsell = db.Select(proprank);
                     bool hasData = (hotestsell != null) ? true : false;
                     successResponseModel = new SuccessResponse(hotestsell, hasData);
                 }
                 catch (Exception ex)
                 {
-                    //Logger.WriteErrorLog(ex);
                     scope.Rollback();
                     return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
                 }
@@ -789,6 +710,7 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
+
         public static object IsRead(RequestModel request)
         {
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
@@ -809,25 +731,18 @@ namespace TestAPI.Models
                     test.Remove("FormID");
                     var query = db.Query("contactus").Where("FormID",_FormID).Update(test);
 
-
-                    
-
                     bool hasData = true;
                     scope.Commit();
                     successResponseModel = new SuccessResponse("", hasData, "Record Saved");
                 }
                 catch (Exception ex)
                 {
-                    //Logger.WriteErrorLog(ex);
                     scope.Rollback();
                     return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
                 }
             }
+
             return successResponseModel;
-
         }
-
-
-
     }
 }

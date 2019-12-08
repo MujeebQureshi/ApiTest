@@ -50,15 +50,13 @@ namespace TestAPI.Models
                 {
                     return null;
                 }
-
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //Logger.WriteErrorLog(ex);
                 //return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
                 return null;
             }
-
         }
 
         public static object AddNewRegUser(RequestModel request)
@@ -91,10 +89,8 @@ namespace TestAPI.Models
 
                     if (User != null)
                     {
-
-
                         Dictionary<string, object> _User = JsonConvert.DeserializeObject<Dictionary<string, object>>(User.ToString());
-
+                        
                         //check if email exists
                         object Email;
                         _User.TryGetValue("Email", out Email);
@@ -159,11 +155,10 @@ namespace TestAPI.Models
                             var responseToken = client.PostAsync(Constants.BaseUrl + "token", content).Result;
                             var responseContent = responseToken.Content.ReadAsStringAsync().Result;
                             responseData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent);
-                            //return response.Content.ReadAsStringAsync().Result;
                         }
                         #endregion
 
-                        bool hasData = true;//(response != null) ? true : false;
+                        bool hasData = true;
                         successResponseModel = new SuccessResponse(responseData, hasData);
                     }
                     else
@@ -255,8 +250,6 @@ namespace TestAPI.Models
 
                     if (User != null)
                     {
-
-
                         Dictionary<string, object> _User = JsonConvert.DeserializeObject<Dictionary<string, object>>(User.ToString());
 
                         //check if email exists
@@ -295,10 +288,7 @@ namespace TestAPI.Models
 
                         //Name Binding house the values that the insert query needs 
                         var IdentityKey = db.Select<string>(sql, compiledQuery.NamedBindings).FirstOrDefault();
-
-                        //test.Add("UserId", IdentityKey);
-                        //var resRegUser = db.Query("RegisteredUser").Insert(test);
-
+                        
                         scope.Commit();
                         Dictionary<string, string> responseData = new Dictionary<string, string>();
 
@@ -324,15 +314,13 @@ namespace TestAPI.Models
                         }
                         #endregion
 
-                        bool hasData = true;//(response != null) ? true : false;
+                        bool hasData = true;
                         successResponseModel = new SuccessResponse(responseData, hasData);
                     }
                     else
                     {
                         scope.Rollback();
                     }
-                    //var response = db.Query("User").Insert(test);
-
                 }
                 catch (Exception ex)
                 {
@@ -373,9 +361,8 @@ namespace TestAPI.Models
                         });
 
                         scope.Commit();
-                        bool hasData = true;//(response != null) ? true : false;
+                        bool hasData = true;
                         successResponseModel = new SuccessResponse("", hasData);
-
                     }
                     else
                     {
@@ -428,7 +415,6 @@ namespace TestAPI.Models
             }
 
             return successResponseModel;
-
         }
 
         public static object Verify(RequestModel request)
@@ -507,9 +493,7 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
-        //forgot password
-        //change password
-
+        
         public static object BuyShare(RequestModel request)
         {
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
@@ -535,13 +519,12 @@ namespace TestAPI.Models
             SuccessResponse successResponseModel = new SuccessResponse();
             try
             {
-                //object response;
                 var response = db.Query("UserShare")
                            .SelectRaw("SUM(`ShareQty`) as SumShares")
                            .Where("PropertyID", _PropertyID)
                            .Get()
                            .Cast<IDictionary<string, object>>();
-                //total share -usershare-sharehold
+
                 int sumShare = 0;
                 if (response != null)
                     sumShare = response.ElementAt(0)["SumShares"] == null ? 0 : Convert.ToInt32(response.ElementAt(0)["SumShares"]);
@@ -560,14 +543,15 @@ namespace TestAPI.Models
                 int remainingShares = _totalShareQuantity - holdShare - sumShare;
                 if (remainingShares > _ShareQty)
                 {
-                    Dictionary<string, object> UserShareRecord = new Dictionary<string, object>() { { "PropertyID", _PropertyID },
-                                                                                                    {"RegUserID", RegUserID},
-                                                                                                    {"DateofInvestment", DateTime.Now.Date },
-                                                                                                    {"ShareMarketValue",ShareMarketValue},
-                                                                                                    {"ShareStatus","H" },
-                                                                                                    {"TotalAmount",TotalAmount},
-                                                                                                    {"ShareQty",ShareQty}
-                                                                                                 }; 
+                    Dictionary<string, object> UserShareRecord = 
+                        new Dictionary<string, object>(){  { "PropertyID", _PropertyID },
+                                                            {"RegUserID", RegUserID},
+                                                            {"DateofInvestment", DateTime.Now.Date },
+                                                            {"ShareMarketValue",ShareMarketValue},
+                                                            {"ShareStatus","H" },
+                                                            {"TotalAmount",TotalAmount},
+                                                            {"ShareQty",ShareQty}
+                                                        }; 
                    var res = db.Query("UserShare").Insert(UserShareRecord);
                    bool hasData = true ;
                    successResponseModel = new SuccessResponse(response, hasData);
@@ -576,15 +560,13 @@ namespace TestAPI.Models
                 else
                 {
                     //handle when remaining share is less
-
                 }
-               
-              
             }
             catch (Exception ex)
             {
                 return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
             }
+
             return successResponseModel;
         }
         
@@ -614,8 +596,8 @@ namespace TestAPI.Models
             }
 
             return successResponseModel;
-
         }
+
         public static object GetUserSharesOnHold(RequestModel request)
         {
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
@@ -648,6 +630,7 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
+
         public static object EditShareStatus(RequestModel request)
         {
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
@@ -660,7 +643,6 @@ namespace TestAPI.Models
             try
             {
                 var response = db.Query("UserShare").Where("UserShareID", _UserShareID).Update(test);
-                    
                 bool hasData =  true;
                 successResponseModel = new SuccessResponse(response, hasData);
             }
@@ -670,7 +652,6 @@ namespace TestAPI.Models
             }
 
             return successResponseModel;
-
         }
     }
 }

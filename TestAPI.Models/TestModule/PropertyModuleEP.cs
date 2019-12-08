@@ -826,6 +826,36 @@ namespace TestAPI.Models
             return successResponseModel;
 
         }
+        public static object ViewPropSharesAdmin(RequestModel request)
+        {
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+
+
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+            try
+            {
+                string sharerank = @" select PropertyID ,ShareBreak ,AvailableShares, TotalShareQuantity, 
+                                        (1 - (AvailableShares / TotalShareQuantity)) * 100 as sharerank
+                                         from propertyshare
+                                            order by sharerank desc ";
+                var viewshares = db.Select(sharerank);
+                //var response = db.Query("propertyshare").Get();
+                bool hasData = (viewshares != null) ? true : false;
+                successResponseModel = new SuccessResponse(viewshares, hasData);
+            }
+
+            catch (Exception ex)
+            {
+                //Logger.WriteErrorLog(ex);
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+        }
 
 
 

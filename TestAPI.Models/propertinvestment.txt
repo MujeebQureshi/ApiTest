@@ -227,3 +227,21 @@ alter table user_interested modify UserInterestedID int(7) zerofill not null aut
 
 alter table contactus modify isRead varchar(1) default "N" not null;
 alter table propertyinvestment.propertydetail add PropertyDetailDescription blob ;
+
+
+alter table rentalproperty
+drop rentedto, drop rooms, drop attachedbath;
+
+
+alter table rentalproperty 
+add actualpercent int(3) not null, 
+add userpercent int(3) not null;
+
+
+alter table propertydetail
+add actualpercent int(3) not null, 
+add userpercent int(3) not null;
+
+alter table propertydetail
+drop CommercialResidential;
+

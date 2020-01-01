@@ -17,7 +17,7 @@ namespace TestAPI.Models
     public class PropertyModuleEP
     {
         public static object GetTop4(RequestModel request)
-        {
+            {
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);

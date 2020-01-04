@@ -744,6 +744,7 @@ namespace TestAPI.Models
 
             return successResponseModel;
         }
+
         public static object ViewPropSharesAdmin(RequestModel request)
         {
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());

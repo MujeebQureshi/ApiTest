@@ -17,7 +17,7 @@ namespace TestAPI.Models
     public class PropertyModuleEP
     {
         public static object GetTop4(RequestModel request)
-        {
+            {
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
@@ -250,7 +250,76 @@ namespace TestAPI.Models
 
 
         }
+        public static object GetAllPropertyByPropertyStatus(RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            object _PropertyType;
+            test.TryGetValue("PropertyType", out _PropertyType);
 
+            // Setup the connection and compiler
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+
+
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+
+            SuccessResponse successResponseModel = new SuccessResponse();
+
+            try
+            {
+                // You can register the QueryFactory in the IoC container
+                IEnumerable<IDictionary<string, object>> response;
+                response = db.Query("propertydetail")
+                    .Where("PropertyType", _PropertyType)
+                    .Get()
+                    .Cast<IDictionary<string, object>>();  //db.Query("jpexperience").Where("ExpId", 6).Where("ProfileId", 4).First();
+
+                bool hasData = (response != null) ? true : false;
+                if (hasData)
+                {
+
+                    foreach (var row in response)
+                    {
+                        //var _PropertyType = row["PropertyType"];
+                        var PropertyID = row["PropertyID"];
+                        int _PropertyID = Convert.ToInt32(PropertyID);
+                        if ((_PropertyType.ToString() == "D"))
+                        {
+                            object response_dev = db.Query("developmental").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                            row.Add("developmental", response_dev);
+                            object response_dev_pred = db.Query("developmentalprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                            row.Add("developmentalprediction", response_dev_pred);
+
+                        }
+                        else if ((_PropertyType.ToString() == "R"))
+                        {
+                            object response_rent = db.Query("rentalproperty").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                            row.Add("rental", response_rent);
+
+
+                        }
+
+                        object response_pred = db.Query("propertyprediction").Where("PropertyID", _PropertyID).Get().Cast<IDictionary<string, object>>();
+                        row.Add("propertyprediction", response_pred);
+
+
+
+                    }
+
+                }
+
+                successResponseModel = new SuccessResponse(response, hasData);
+            }
+            catch (Exception ex)
+            {
+                //Logger.WriteErrorLog(ex);
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+
+        }
         public static object GetPropertyEditableByID(RequestModel request)
         {
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
@@ -309,6 +378,7 @@ namespace TestAPI.Models
 
 
         }
+
 
         public static object EditProperty(RequestModel request)
         {
@@ -480,6 +550,7 @@ namespace TestAPI.Models
 
             try
             {
+               
                 IDictionary<string, object> response = db.Query("PropertyShare")
                                                           .Where("PropertyID", _PropertyID)
                                                           .Get()
@@ -550,7 +621,6 @@ namespace TestAPI.Models
                   
 
                     test.Add("DateQueried", DateTime.Now.ToString("yyyy-MM-dd"));            
-
                     var query = db.Query("contactus").Insert(test);
                     
                     bool hasData = true;

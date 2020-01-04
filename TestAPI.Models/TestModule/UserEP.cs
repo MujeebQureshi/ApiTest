@@ -513,61 +513,70 @@ namespace TestAPI.Models
             test.TryGetValue("RegUserID", out RegUserID);
 
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
-
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
             SuccessResponse successResponseModel = new SuccessResponse();
-            try
+            db.Connection.Open();
+            using (var scope = db.Connection.BeginTransaction())
             {
-                var response = db.Query("UserShare")
-                           .SelectRaw("SUM(`ShareQty`) as SumShares")
-                           .Where("PropertyID", _PropertyID)
-                           .Get()
-                           .Cast<IDictionary<string, object>>();
+                try
+                {
+                    //object response;
+                    var response = db.Query("UserShare")
+                               .SelectRaw("SUM(`ShareQty`) as SumShares")
+                               .Where("PropertyID", _PropertyID)
+                               .Get()
+                               .Cast<IDictionary<string, object>>();
+                    //total share -usershare-sharehold
+                    int sumShare = 0;
+                    if (response != null)
+                        sumShare = response.ElementAt(0)["SumShares"] == null ? 0 : Convert.ToInt32(response.ElementAt(0)["SumShares"]);
+                    response = db.Query("PropertyShareHold")
+                               .Select("PropertyID", "ShareQty")
+                               .SelectRaw("MAX(`URN`) as MaxURN")
+                               .Where("PropertyID", _PropertyID)
+                               .Get()
+                               .Cast<IDictionary<string, object>>();
+                    int holdShare = 0;
+                    if (response != null)
+                    {
+                        holdShare = response.ElementAt(0)["ShareQty"] == null ? 0 : Convert.ToInt32(response.ElementAt(0)["ShareQty"]);
 
-                int sumShare = 0;
-                if (response != null)
-                    sumShare = response.ElementAt(0)["SumShares"] == null ? 0 : Convert.ToInt32(response.ElementAt(0)["SumShares"]);
-                response = db.Query("PropertyShareHold")
-                           .Select("PropertyID", "ShareQty")
-                           .SelectRaw("MAX(`URN`) as MaxURN")
-                           .Where("PropertyID", _PropertyID)
-                           .Get()
-                           .Cast<IDictionary<string, object>>();
-                int holdShare = 0;
-                if (response != null)
-                {
-                    holdShare = response.ElementAt(0)["ShareQty"] == null ? 0 : Convert.ToInt32(response.ElementAt(0)["ShareQty"]);
-                    
-                }
-                int remainingShares = _totalShareQuantity - holdShare - sumShare;
-                if (remainingShares > _ShareQty)
-                {
-                    Dictionary<string, object> UserShareRecord = 
-                        new Dictionary<string, object>(){  { "PropertyID", _PropertyID },
-                                                            {"RegUserID", RegUserID},
-                                                            {"DateofInvestment", DateTime.Now.Date },
-                                                            {"ShareMarketValue",ShareMarketValue},
-                                                            {"ShareStatus","H" },
-                                                            {"TotalAmount",TotalAmount},
-                                                            {"ShareQty",ShareQty}
-                                                        }; 
-                   var res = db.Query("UserShare").Insert(UserShareRecord);
-                   bool hasData = true ;
-                   successResponseModel = new SuccessResponse(response, hasData);
-                   
-                }
-                else
-                {
-                    //handle when remaining share is less
-                }
-            }
-            catch (Exception ex)
-            {
-                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
-            }
+                    }
+                    int remainingShares = _totalShareQuantity - holdShare - sumShare;
+                    if (remainingShares > _ShareQty)
+                    {
+                        Dictionary<string, object> UserShareRecord = new Dictionary<string, object>() { { "PropertyID", _PropertyID },
+                                                                                                    {"RegUserID", RegUserID},
+                                                                                                    {"DateofInvestment", DateTime.Now.Date },
+                                                                                                    {"ShareMarketValue",ShareMarketValue},
+                                                                                                    {"ShareStatus","H" },
+                                                                                                    {"TotalAmount",TotalAmount},
+                                                                                                    {"ShareQty",ShareQty}
+                                                                                                 };
+                        remainingShares = remainingShares - _ShareQty;
+                        var res1= db.Query("PropertyShare").Where("PropertyID", _PropertyID).Update( new { AvailableShares = remainingShares }) ;
+                        var res = db.Query("UserShare").Insert(UserShareRecord);
+                        bool hasData = true;
+                        scope.Commit();
+                        successResponseModel = new SuccessResponse(res, hasData);
 
-            return successResponseModel;
+                    }
+                    else
+                    {
+                        //handle when remaining share is less
+
+                    }
+
+
+                }
+                catch (Exception ex)
+                {
+                    scope.Rollback();
+                    return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+                }
+                return successResponseModel;
+            }
         }
         
         public static object GetUserShares (RequestModel request)
@@ -636,14 +645,157 @@ namespace TestAPI.Models
             var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
             object _UserShareID;
             test.TryGetValue("UserShareID", out _UserShareID);
+            object _ShareStatus;
+            test.TryGetValue("ShareStatus", out _ShareStatus);
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+            db.Connection.Open();
+            SuccessResponse successResponseModel = new SuccessResponse();
+            using (var scope = db.Connection.BeginTransaction())
+            {
+                try
+                {
+                    //to update available shares
+                    if (_ShareStatus.ToString() == "A")
+                    { var res1 = db.Query("UserShare").Select("ShareQty","PropertyID").Where("UserShareID", _UserShareID).Get().Cast<IDictionary<string, object>>();
+                        int ShareQty = Convert.ToInt32(res1.ElementAt(0)["ShareQty"]);
+                        int PropertyID = Convert.ToInt32(res1.ElementAt(0)["PropertyID"]);
+                        var res2 = db.Query("PropertyShare").Select("AvailableShares").Where("PropertyID", PropertyID).Get().Cast<IDictionary<string, object>>();
+                        int availableShares= Convert.ToInt32(res2.ElementAt(0)["AvailableShares"]);
+                        availableShares = availableShares - ShareQty;
+                        var res3 = db.Query("PropertyShare").Where("PropertyID", PropertyID).Update(new { availableShares = availableShares });
+                    }
+                    var response = db.Query("UserShare").Where("UserShareID", _UserShareID).Update(test);
+
+                    bool hasData = true;
+                    scope.Commit();
+                    successResponseModel = new SuccessResponse(response, hasData);
+                }
+                catch (Exception ex)
+                {
+                    scope.Rollback();
+                    return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+                }
+
+                return successResponseModel;
+            }
+        }
+
+        public static object AddUserInterested (RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+            SuccessResponse successResponseModel = new SuccessResponse();
+            db.Connection.Open();
+            using (var scope = db.Connection.BeginTransaction())
+            {
+                try
+                {
+                    var response = db.Query("User_Interested").Insert(test);
+
+                    bool hasData = true;
+                    scope.Commit();
+                    successResponseModel = new SuccessResponse(response, hasData);
+                }
+                catch (Exception ex)
+                {
+                    scope.Rollback();
+                    return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+                }
+
+                return successResponseModel;
+            }
+        }
+        public static object GetUserInterested(RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            object _UserID;
+            test.TryGetValue("UserID", out _UserID);
             var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
             var compiler = new MySqlCompiler();
             var db = new QueryFactory(connection, compiler);
             SuccessResponse successResponseModel = new SuccessResponse();
             try
             {
-                var response = db.Query("UserShare").Where("UserShareID", _UserShareID).Update(test);
-                bool hasData =  true;
+                  var response = db.Query("User_Interested as I")
+                       .Select("PropertyDetail.PropertyName as PropertyName", "Propertydetail.PropertyType as PropertyType", "I.LastfiledDateTime","I.ValueOnCurrentDate")
+                       .Join("Propertydetail", "Propertydetail.PropertyID", "I.PropertyID")
+                       .Where("I.UserID", _UserID)
+                       .Get(); 
+              
+
+                bool hasData = true;
+                successResponseModel = new SuccessResponse(response, hasData);
+            }
+            catch (Exception ex)
+            {
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+        }
+
+//get all users investments for property        
+        public static object GetAllUsersforProperty (RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            object PropertyID;
+            test.TryGetValue("PropertyID", out PropertyID);
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+            SuccessResponse successResponseModel = new SuccessResponse();
+            try
+            {
+                var response = db.Query("UserShare as S")
+                   .Select("U.UserName as UserName", "S.DateofInvestment as DateInvested",
+                   "S.ShareQty as ShareQty", "S.ShareMarketValue as ShareMarketValue", "S.TotalAmount as TotalAmount")
+                   .Join("RegisteredUser as R", "R.RegUserID", "S.RegUserID")
+                   .Join("User as U", "R.UserID", "U.UserID")
+                   .Where("S.ShareStatus", "<>", "H")
+                   .Where("S.PropertyID", PropertyID)
+                   .OrderBy("S.RegUserID")
+                   .OrderBy("S.PropertyID")
+                   .OrderByDesc("S.DateofInvestment")
+                   .Get();
+                bool hasData = true;
+                successResponseModel = new SuccessResponse(response, hasData);
+
+            }
+            catch (Exception ex)
+            {
+                return new ErrorResponse(ex.Message, HttpStatusCode.BadRequest);
+            }
+
+            return successResponseModel;
+
+        }
+        public static object GetAllPropertyforUsers(RequestModel request)
+        {
+            var test = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(Convert.ToString(request.RequestData));
+            object RegUserID;
+            test.TryGetValue("RegUserID", out RegUserID);
+            var connection = new MySqlConnection(ConfigurationManager.AppSettings["MySqlDBConn"].ToString());
+            var compiler = new MySqlCompiler();
+            var db = new QueryFactory(connection, compiler);
+            SuccessResponse successResponseModel = new SuccessResponse();
+            try
+            {
+                var response = db.Query("UserShare as S")
+                   .Select("P.PropertyName as PropertyName", "P.PropertyType","S.DateofInvestment as DateInvested",
+                   "S.ShareQty as ShareQty", "S.ShareMarketValue as ShareMarketValue", "S.TotalAmount as TotalAmount")
+                   .Join("PropertyDetail as P", "P.PropertyID", "S.PropertyID")
+                   .Where("S.ShareStatus", "<>", "H")
+                   .Where("S.RegUserID", RegUserID)
+                   .OrderBy("S.PropertyID")
+                   .OrderByDesc("S.DateofInvestment")
+                   .Get();
+                bool hasData = true;
                 successResponseModel = new SuccessResponse(response, hasData);
             }
             catch (Exception ex)
